@@ -18,17 +18,17 @@ export class SamsasController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.samsasService.findOne(+id);
+  findOne(@Param('id') id: string) {  
+    return this.samsasService.findOne(id);
   }
 
   @Put(':id')
   update(@Param('id') id: string, @Body() updateSamsaDto: UpdateSamsaDto) {
-    return this.samsasService.update(+id, updateSamsaDto);
+    return this.samsasService.update(id, updateSamsaDto);
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.samsasService.remove(+id);
+    return this.samsasService.remove(id);
   }
 }

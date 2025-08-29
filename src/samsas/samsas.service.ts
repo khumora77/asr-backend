@@ -1,39 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Samsa, SamsaDocument } from './samsa.schema';
 import { CreateSamsaDto } from './dto/create-samsa.dto';
 import { UpdateSamsaDto } from './dto/update-samsa.dto';
-import { Samsa } from './entities/samsa.entity';
 
 @Injectable()
 export class SamsasService {
-  private samsas: Samsa[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectModel(Samsa.name) private samsaModel: Model<SamsaDocument>,
+  ) {}
 
-  create(createSamsaDto: CreateSamsaDto) {
-    const newSamsa: Samsa = { id: this.idCounter++, ...createSamsaDto };
-    this.samsas.push(newSamsa);
-    return newSamsa;
+  async create(createSamsaDto: CreateSamsaDto): Promise<Samsa> {
+    const newSamsa = new this.samsaModel(createSamsaDto);
+    return newSamsa.save();
   }
 
-  findAll() {
-    return this.samsas;
+  async findAll(): Promise<Samsa[]> {
+    return this.samsaModel.find().exec();
   }
 
-  findOne(id: number) {
-    return this.samsas.find(s => s.id === id);
-  }
-
-  update(id: number, updateSamsaDto: UpdateSamsaDto) {
-    const samsa = this.findOne(id);
-    if (!samsa) return null;
-    Object.assign(samsa, updateSamsaDto);
+  async findOne(id: string): Promise<Samsa> {
+    const samsa = await this.samsaModel.findById(id).exec();
+    if (!samsa) {
+      throw new NotFoundException(`Samsa with ID "${id}" not found`);
+    }
     return samsa;
   }
 
-  remove(id: number) {
-    const index = this.samsas.findIndex(s => s.id === id);
-    if (index === -1) return null;
-    const deleted = this.samsas[index];
-    this.samsas.splice(index, 1);
-    return deleted;
+  async update(id: string, updateSamsaDto: UpdateSamsaDto): Promise<Samsa> {
+    const samsa = await this.samsaModel
+      .findByIdAndUpdate(id, updateSamsaDto, { new: true })
+      .exec();
+
+    if (!samsa) {
+      throw new NotFoundException(`Samsa with ID "${id}" not found`);
+    }
+    return samsa;
+  }
+
+  async remove(id: string): Promise<Samsa> {
+    const samsa = await this.samsaModel.findByIdAndDelete(id).exec();
+    if (!samsa) {
+      throw new NotFoundException(`Samsa with ID "${id}" not found`);
+    }
+    return samsa;
   }
 }
